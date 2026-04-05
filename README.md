@@ -1,3 +1,3 @@
 # Gewaechshaus
 Code für Gewächshaus-Schulprojekt  
-Moin
+Moin, das ist der Ort, wo der Code für die beiden ESPs für das Gewächshausprojekt gespeichert werden.
