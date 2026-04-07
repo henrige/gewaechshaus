@@ -3,6 +3,11 @@
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
 
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+unsigned long lastMsg;
+unsigned int payload;
 
 void setup() {
   // Serielle Kommunikation initialisieren, extra bisschen delay damit erster Print auch sichtbar ist nachdem der ESP erst Müll ausspuckt
@@ -32,10 +37,24 @@ void setup() {
 }
 
 void loop() {
-  // Ceckt ob MQTT Broker verbunden ist
+  // Checkt ob MQTT Broker verbunden ist
   if(!client.connected()) {
     reconnect();
   }
+  // Zeitabstand zwischen gesendeten Nachrichten
+  long now = millis();
+  if (now - lastMsg > 5000) {
+    lastMsg = now;
+    // Hier Payload eingeben
+    payload = analogRead(A0);
+    Serial.println(payload);
+    // Konvertieren vom Integer vom Payload in ein Character Array, kann auch länger sein
+    char msg_out[8];
+    sprintf(msg_out, "%d", payload);
+    // Und sendet hier Nachricht an Broker
+    client.publish("/gewaechshaus/esp8266data", msg_out);
+  }
+
 }
 
 void reconnect() {
@@ -46,7 +65,7 @@ void reconnect() {
     String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
     // Versuche zu verbinden
-    if(client.connect(client_Id.c_str(), mqtt_user, mqtt_pwd)) {
+    if(client.connect(clientId.c_str(), mqtt_user, mqtt_pwd)) {
       Serial.println("Verbunden.");
     } else {
       Serial.print("Fehler, code=");
