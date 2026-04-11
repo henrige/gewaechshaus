@@ -2,12 +2,16 @@
 #include "creds.h"
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
+#include <DHT.h>
+#include <Adafruit_Sensor.h>
 
+// Instanzen
 WiFiClient espClient;
 PubSubClient client(espClient);
 
 unsigned long lastMsg;
 unsigned int payload;
+const int ldr = A0;
 
 void setup() {
   // Serielle Kommunikation initialisieren, extra bisschen delay damit erster Print auch sichtbar ist nachdem der ESP erst Müll ausspuckt
@@ -46,11 +50,13 @@ void loop() {
   if (now - lastMsg > 5000) {
     lastMsg = now;
     // Hier Payload eingeben
-    payload = analogRead(A0);
-    Serial.println(payload);
+    int ldrHelligkeit;
+    ldrHelligkeit = analogRead(A0);
+    Serial.print("Helligkeit: ");
+    Serial.println(ldrHelligkeit);
     // Konvertieren vom Integer vom Payload in ein Character Array, kann auch länger sein
     char msg_out[8];
-    sprintf(msg_out, "%d", payload);
+    sprintf(msg_out, "%d", ldrHelligkeit);
     // Und sendet hier Nachricht an Broker
     client.publish("/gewaechshaus/esp8266data", msg_out);
   }
