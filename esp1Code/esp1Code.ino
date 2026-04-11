@@ -4,13 +4,17 @@
 #include <ESP8266WiFi.h>
 #include <DHT.h>
 #include <Adafruit_Sensor.h>
+#include <Wire.h>
+
+#define DHTPIN 10 // S3
+#define DHTTYPE DHT22 // AM2302
 
 // Instanzen
 WiFiClient espClient;
 PubSubClient client(espClient);
+DHT dht(DHTPIN, DHTTYPE);
 
 unsigned long lastMsg;
-unsigned int payload;
 const int ldr = A0;
 
 void setup() {
@@ -38,6 +42,8 @@ void setup() {
   digitalWrite(onboardLed, onboardLedStatus);
   // MQTT Server Details aufsetzen
   client.setServer(mqtt_server, 1883);
+  // DHT Begin und sowas
+  dht.begin();
 }
 
 void loop() {
@@ -49,8 +55,8 @@ void loop() {
   long now = millis();
   if (now - lastMsg > 5000) {
     lastMsg = now;
-    // Hier Payload eingeben
-    int ldrHelligkeit;
+    // Payload Helligkeit
+    unsigned int ldrHelligkeit;
     ldrHelligkeit = analogRead(A0);
     Serial.print("Helligkeit: ");
     Serial.println(ldrHelligkeit);
@@ -58,7 +64,36 @@ void loop() {
     char msg_out[8];
     sprintf(msg_out, "%d", ldrHelligkeit);
     // Und sendet hier Nachricht an Broker
-    client.publish("/gewaechshaus/esp8266data", msg_out);
+    client.publish("gewaechshaus/helligkeit", msg_out);
+
+    // Payload Temperatur und Luftfeuchtigkeit
+    float temperatur = 0.0;
+    float luftfeuchtigkeit = 0.0;
+    float newT = dht.readTemperature();
+    if (isnan(newT)) {
+      Serial.println("Failed to read from DHT");
+    } else {
+      temperatur = newT;
+      Serial.print("Temperatur: ");
+      Serial.println(temperatur);
+      // Auch hier konvertieren, nur halt von einem Float
+      char msg_out[4];
+      sprintf(msg_out, "%f", temperatur);
+      // Publish für Temperatur
+      client.publish("gewaechshaus/temperatur", msg_out);
+    } // Und das gleiche für die Luftfeuchtigkeit
+    float newH = dht.readHumidity();
+    if (isnan(newH)) {
+      Serial.println("Failed to read from DHT");
+    } else {
+      luftfeuchtigkeit = newH;
+      Serial.print("Luftfeuchtigkeit: ");
+      Serial.println(luftfeuchtigkeit);
+      // Konvertierung
+      char msg_out[4];
+      sprintf(msg_out, "%f", luftfeuchtigkeit);
+      client.publish("gewaechshaus/luftfeuchtigkeit", msg_out);
+    }
   }
 
 }
