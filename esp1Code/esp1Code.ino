@@ -98,6 +98,7 @@ void loop() {
 
 }
 
+// Noch abwandeln, Wlan-Abfrage hinzufügen
 void reconnect() {
   while(!client.connected()) {
     Serial.println("");
