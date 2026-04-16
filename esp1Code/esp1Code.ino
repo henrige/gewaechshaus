@@ -14,8 +14,8 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 DHT dht(DHTPIN, DHTTYPE);
 
-unsigned long lastMsg;
-const int ldr = A0;
+unsigned long lastMsg; // Zeitstempel für millis() später
+const int ldr = A0; // Analoger Input des Light Dependent Resistors (Photowiderstand), mehr Licht = höherer analoger Wert
 
 void setup() {
   // Serielle Kommunikation initialisieren, extra bisschen delay damit erster Print auch sichtbar ist nachdem der ESP erst Müll ausspuckt
